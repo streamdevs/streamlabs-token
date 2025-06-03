@@ -43,6 +43,10 @@ function App() {
         body: formData,
       });
 
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
       const data = await response.json() as { access_token: string | undefined };
       const {access_token} = data;
 
