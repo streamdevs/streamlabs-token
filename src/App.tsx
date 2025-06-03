@@ -87,7 +87,7 @@ function App() {
   return (
     <main className="App">
       <header>
-        <a style={{color: "white"}} href={authorizeUrl}>
+        <a className='header__authorization-link' href={authorizeUrl}>
           Login with Streamlabs
         </a>
       </header>
