@@ -54,6 +54,28 @@ button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
+.standalone__form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  &.line {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+input[type='text'] {
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-family: inherit;
+  border: 1px solid #1a1a1a;
+  border-radius: 8px;
+  background-color: #1a1a1a;
+  color: inherit;
+  width: 100%;
+}
+
 @media (prefers-color-scheme: light) {
   :root {
     color: #213547;
@@ -64,5 +86,10 @@ button:focus-visible {
   }
   button {
     background-color: #f9f9f9;
+  }
+
+  input[type='text'] {
+    background-color: #f9f9f9;
+    border-color: #f9f9f9;
   }
 }
