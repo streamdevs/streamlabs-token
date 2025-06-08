@@ -1,66 +1,98 @@
-import React, { useState } from "react";
-import qs from "qs";
-import "./App.css";
+import {useState} from 'react'
+import './App.css'
 
-const App: React.FC = function () {
-  const apiUrl = "https://streamlabs.com/api/v1.0/";
-  const redirectUri = `${window.location.protocol}//${window.location.host}`;
-  const authorizeUrl = `${apiUrl}authorize?response_type=code&redirect_uri=${redirectUri}&client_id=${process.env.REACT_APP_CLIENT_ID}&scope=alerts.create`;
+function App() {
+  // Alternatively, we should have streamdevs-streamlabs-cli to just ask for the client_id and secret, and return the token
+  // This is a self-hosted web app. Only the developer is going to see this page
+  const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
+
+  const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
+  const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
+
   const [token, setToken] = useState<string | null>(null);
-  const [viewToken, setViewToken] = useState<boolean>(false);
+  const [showToken, setShowToken] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const { code } = qs.parse(window.location.search, {
-    ignoreQueryPrefix: true,
-  });
+  if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
+    return (
+      <main>
+        <header>
+          Configuration error
+          <p><code>VITE_CLIENT_ID</code>, <code>VITE_CLIENT_SECRET</code> and <code>VITE_REDIRECT_URI</code> must be provided as environment variables.
+          </p>
+        </header>
+      </main>
+    )
+  }
 
-  if (code && !token) {
+  const apiUrl = "https://streamlabs.com/api/v2.0/";
+  const authorizeUrl = `${apiUrl}authorize?response_type=code&redirect_uri=${REDIRECT_URI}&client_id=${CLIENT_ID}&scope=alerts.create`;
+  const code = new URLSearchParams(window.location.search).get("code");
+
+  if (code && code.length > 0 && !token) {
     const formData = new FormData();
     formData.append("code", code);
     formData.append("grant_type", "authorization_code");
-    formData.append("client_id", process.env.REACT_APP_CLIENT_ID || "");
-    formData.append("client_secret", process.env.REACT_APP_CLIENT_SECRET || "");
-    formData.append("redirect_uri", redirectUri);
+    formData.append("client_id", CLIENT_ID);
+    formData.append("client_secret", CLIENT_SECRET);
+    formData.append("redirect_uri", REDIRECT_URI);
 
     const fetchToken = async () => {
-      const { access_token } = await fetch(`/api/token`, {
+      const response = await fetch(`/api/token`, {
         method: "POST",
         body: formData,
-      }).then((res) => {
-        if (!res.ok) {
-          window.location.search = "";
-        }
-
-        return res.json();
       });
 
-      setToken(access_token);
+      if (!response.ok) {
+        throw new Error(response.statusText);
+      }
+
+      const data = await response.json() as { access_token: string | undefined };
+      const {access_token} = data;
+
+      setToken(access_token ?? null);
     };
 
-    fetchToken();
+    fetchToken().catch((e: unknown) => {
+      setErrorMessage((e as Error).message)
+    });
+  }
+
+  if (errorMessage) {
+    return (
+      <main>
+        <header>
+          An error occurred fetching the Streamlabs token:
+          <p>{errorMessage}</p>
+        </header>
+      </main>
+    )
   }
 
   if (token) {
     return (
-      <div className="App">
-        <header className="App-header">
-          <input type={viewToken ? "text" : "password"} defaultValue={token} />
-          <button onClick={() => setViewToken(!viewToken)}>
-            {viewToken ? "Hide token" : "Show token"}
+      <main>
+        <header>
+          <input type={showToken ? "text" : "password"} defaultValue={token}/>
+          <button type="button" onClick={() => {
+            setShowToken(!showToken)
+          }}>
+            {showToken ? "Hide token" : "Show token"}
           </button>
         </header>
-      </div>
+      </main>
     );
   }
 
   return (
-    <div className="App">
-      <header className="App-header">
-        <a style={{ color: "white" }} href={authorizeUrl}>
-          Login with StreamLabs
+    <main className="App">
+      <header>
+        <a className='header__authorization-link' href={authorizeUrl}>
+          Login with Streamlabs
         </a>
       </header>
-    </div>
+    </main>
   );
-};
+}
 
-export default App;
+export default App
