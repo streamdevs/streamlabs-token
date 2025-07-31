@@ -1,18 +1,62 @@
 import {useState} from 'react'
 import './App.css'
 
+const DEFAULT_REDIRECT_URI = "https://app.streamdevs.com/oauth/callback";
+
 function App() {
   // Alternatively, we should have streamdevs-streamlabs-cli to just ask for the client_id and secret, and return the token
   // This is a self-hosted web app. Only the developer is going to see this page
   const CLIENT_SECRET = import.meta.env.VITE_CLIENT_SECRET;
 
   const CLIENT_ID = import.meta.env.VITE_CLIENT_ID;
-  const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI;
+  /* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */
+  const REDIRECT_URI = import.meta.env.VITE_REDIRECT_URI || DEFAULT_REDIRECT_URI;
 
   const [token, setToken] = useState<string | null>(null);
   const [showToken, setShowToken] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    console.log('lol');
+
+    return false;
+  }
+
+  // When no env variable is set, work in standalone mode
+  if (!CLIENT_ID && !CLIENT_SECRET) {
+    return (
+      <main className="standalone">
+        <header>
+          <h1>Streamlabs integration</h1>
+          <ol>
+            <li>Ensure you have a registered OAuth Client with the Streamlabs API. See <a href="#"></a> to edit or create a new one.</li>
+            <li>In our OAUth client configuration, add <code>{REDIRECT_URI}</code> to your <em>redirect URIs</em></li>
+            <li>Fill out the form below</li>
+            <li>Authorize your app to use the Streamlabs API</li>
+            <li>Copy the Authentication Token provided by the Streamlabs API</li>
+            {/* eslint-disable-next-line react-dom/no-unsafe-target-blank */}
+            <li>Use the token wherever you need to, like <strong><a href="https://github.com/streamdevs/webhook" target="_blank">streamdevs/webhook</a></strong></li>
+          </ol>
+          <form className="standalone__form" onSubmit={handleSubmit}>
+            <div className="standalone__form__line">
+              <input type="text" name="client_id" placeholder="Client ID" />
+            </div>
+            <div className="standalone__form__line">
+              <input type="text" name="client_secret" placeholder="Client Secret" />
+            </div>
+            <div className="standalone__form__line">
+              <input type="text" name="redirect_uri" placeholder="Redirect URI" defaultValue={REDIRECT_URI} readOnly />
+            </div>
+            <div className="standalone__form__line">
+              <button type="submit">Authorize</button>
+            </div>
+          </form>
+        </header>
+      </main>
+    )
+  }
+
+  // If only some are missing, report it
   if (!CLIENT_ID || !CLIENT_SECRET || !REDIRECT_URI) {
     return (
       <main>

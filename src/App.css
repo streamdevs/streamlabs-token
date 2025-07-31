@@ -5,6 +5,10 @@
   text-align: center;
 }
 
+.standalone {
+  text-align: left;
+}
+
 .header__authorization-link {
   color: white;
 }
